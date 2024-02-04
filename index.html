@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="size-position">
+      <div>
+        <label for="account-risk">Account Risk: </label>
+        <select name="account-risk" id="account-risk">
+          <option value="5">$5</option>
+          <option value="10" selected>$10</option>
+          <option value="15">$15</option>
+          <option value="20">$20</option>
+        </select>
+      </div>
+      <!-- get a calculator for position -->
+      <label for="risk-percentage">Risk percentage: </label>
+      <input
+        type="text"
+        inputmode="numeric"
+        name="risk-percentage"
+        id="risk-percentage"
+        value=""
+      />
+      <button class="position-button">Get Position Size</button>
+      <div class="amount-container">
+        <label for="position-amount">Position amount: </label>
+        <input type="text" inputmode="numeric" id="position-amount" readonly />
+      </div>
+      <div class="prices-container">
+        <button class="price-button">Extract Price</button>
+        <div>Entry Price: <span id="entry">0</span></div>
+        <div>Target Price: <span id="target">0</span></div>
+        <div>Stop Price: <span id="stop">0</span></div>
+        <div>Profit: <span id="profit">0</span></div>
+        <div>Loss: <span id="loss">0</span></div>
+      </div>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>

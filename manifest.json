@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "CryptoPos",
+  "version": "1.0",
+  "host_permissions": ["<all_urls>"],
+  "permissions": ["scripting", "activeTab"],
+  "action": {
+    "default_icon": {
+      "16": "resources/icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
