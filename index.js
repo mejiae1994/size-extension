@@ -16,6 +16,7 @@ let target = document.querySelector("#target");
 let stop = document.querySelector("#stop");
 let profit = document.querySelector("#profit");
 let loss = document.querySelector("#loss");
+let position = document.querySelector("#position")
 
 const prices = {
   risk: 10,
@@ -31,6 +32,7 @@ const prices = {
     stop.textContent = this.stopPrice;
     profit.textContent = this.profit.toFixed(1);
     loss.textContent = this.loss.toFixed(1);
+    position.textContent = this.positionSize;
   },
   doCalculations: function () {
     let lossPercent = Math.abs(

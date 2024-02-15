@@ -1,15 +1,21 @@
-const applicableSites = ["gocharting", "futures"];
+const applicableSites = ["gocharting", "futures", "127", "www"];
 
 chrome.action.onClicked.addListener(function (tab) {
-  console.log("executing script");
   let websiteName = tab.url.split("//")[1].split(".")[0];
 
+  console.log("website is: ", websiteName)
   if (applicableSites.includes(websiteName)) {
-    console.log("we are on the gocharting web page");
+    console.log("executing script");
 
     chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: ["content.js"],
+    });
+    
+    // Inject CSS
+    chrome.scripting.insertCSS({
+      target: { tabId: tab.id },
+      files: ["styles.css"],
     });
   }
 });

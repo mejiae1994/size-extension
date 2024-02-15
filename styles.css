@@ -1,0 +1,15 @@
+#myExtensionDiv {
+    background-color: #0c243c;
+    font-size: 1.5rem;
+    margin: 1rem;
+    padding: 1rem;
+    
+    button {
+        background-color: black;
+        color: white;
+    }
+
+    input {
+        color: black;
+    }
+}
