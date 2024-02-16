@@ -144,7 +144,6 @@ if (existingDiv) {
   amountContainer.appendChild(amountLabel)
   amountContainer.appendChild(amountInput)
 
-
   //prices section
   let priceContainer = document.createElement('div')
   amountContainer.className = 'prices-container'
@@ -288,6 +287,8 @@ if (existingDiv) {
       return;
     }
 
+    let long = 0;
+
     if(direction.toLowerCase().trim() === positionDirection.longText) {
       console.log("Long Position activated")
         // price levels for entry, profit, stop
@@ -302,6 +303,7 @@ if (existingDiv) {
       stopLevel = iframeDocument.querySelector(
         '[data-property-id="Risk/RewardlongStopLevelPrice"]'
       );
+      long = true;
     }
     else if(direction.toLowerCase().trim() === positionDirection.shortText) {
       console.log("Short Position activated")
@@ -323,6 +325,7 @@ if (existingDiv) {
       return;
     }
 
+    //update the prices object with the extracted values
     prices.entryPrice = parseFloat(entryLevel.value);
     prices.profitPrice = parseFloat(profitLevel.value);
     prices.stopPrice = parseFloat(stopLevel.value);
@@ -330,32 +333,67 @@ if (existingDiv) {
     prices.doCalculations();
     prices.updatePrices();
 
+    //what to use this for?
     let contractWindow = document.querySelector("#mexc_contract_v_open_position")
     console.log(contractWindow)
 
+    //element for grabbing position size input
     let quantityDiv = document.querySelector(".component_numberInput__h86N3")
     let quantityInput = quantityDiv.querySelector("input")
-    let positionDivbutton = Array.from(iframeDocument.querySelectorAll('.button-OvB35Th_'))[1];
+
+    //element for clicking TP/SL checkbox
+    let tpslComponent = document.querySelector(".component_strategyWrapper__wzqv8")
+    let tpslCheck = tpslComponent.querySelectorAll(".ant-checkbox-wrapper")
+
+    //element for getting open long/short button
+    let openButtonComponent = document.querySelector(".component_VOperateWrapper__Ulmgr")
+    let openButtons = openButtonComponent.querySelectorAll("button")
+
+    let tpslDirection;
+    let openDirectionButton;
+    if(long) {
+      tpslDirection = tpslCheck[0]
+      openDirectionButton = openButtons[0]
+    }
+    else {
+      tpslDirection = tpslCheck[1]
+      openDirectionButton = openButtons[1]
+    }
     
-    positionDivbutton.click();
+    //get checkbox state and if it's already checked, no need to simulate click
+    let isTpslChecked = tpslDirection.querySelector("input").checked;
+    if(!isTpslChecked) {
+      //open TP/SL window
+      tpslDirection.click();
+    }
 
-        // Set the value
-    quantityInput.value = prices.positionSize;
+    //elements for take profit and stop loss inputs
+    let profitComponent = document.querySelector(".component_stopWrapper__wIwi1");
+    let inputComponents = profitComponent.querySelectorAll("input");
+    let profitInput = inputComponents[0];
+    let lossInput = inputComponents[1];
+  
+    setInputValueAndDispatchEvent(quantityInput, 50);
+    setInputValueAndDispatchEvent(profitInput, prices.profitPrice);
+    setInputValueAndDispatchEvent(lossInput, prices.stopPrice);
 
-    // Create a new 'Event' 
-    let event = new Event('input', { bubbles: true });
-
-    // Dispatch the event
-    quantityInput.dispatchEvent(event);
-
+    if(quantityInput.value > 0 && profitInput.value > 0 && lossInput.value > 0) {
+      console.log("buying position");
+      openDirectionButton.click();
+    }
   });
 
   positionButton.addEventListener("click", calculatePositionSize);
-
-  function calculatePositionSize(event) {
-    let riskMultiplier = parseFloat(riskPercent.value) / 100;
-    let calculatedAmount = prices.risk / riskMultiplier;
-    positionAmount.value = calculatedAmount;
-  }
-  
 }
+
+function setInputValueAndDispatchEvent(inputElement, value) {
+  inputElement.value = value;
+  inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function calculatePositionSize(event) {
+  let riskMultiplier = parseFloat(riskPercent.value) / 100;
+  let calculatedAmount = prices.risk / riskMultiplier;
+  positionAmount.value = calculatedAmount;
+}
+
