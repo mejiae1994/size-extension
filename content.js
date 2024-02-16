@@ -1,68 +1,76 @@
 // Check if the element already exists
 var existingDiv = document.getElementById("myExtensionDiv");
 
-var observer;
 
-if(!observer) {
-  let timeout = null;
 
-  observer = new MutationObserver(function(mutations) {
+// var observer;
 
-    if (timeout) return;
+// if(!observer) {
+//   let timeout = null;
 
-    timeout = setTimeout(function() {
-      console.log("running")
+//   observer = new MutationObserver(function(mutations) {
 
-      timeout = null;
+//     if (timeout) return;
+
+//     timeout = setTimeout(function() {
+//       console.log("running")
+
+//       timeout = null;
   
-      let iframeContainer = document.body.querySelector("#tv_chart_container").firstElementChild
-      let iframeDocument = iframeContainer.contentDocument || iframeContainer.contentWindow.document;
-      let overlapManager = iframeDocument.querySelector("#overlap-manager-root")
+//       let iframeContainer = document.body.querySelector("#tv_chart_container").firstElementChild
+//       let iframeDocument = iframeContainer.contentDocument || iframeContainer.contentWindow.document;
+//       let overlapManager = iframeDocument.querySelector("#overlap-manager-root")
 
-      console.log(overlapManager)
-      console.log(overlapManager.hasChildNodes())
-      if(!overlapManager.hasChildNodes()) {
-        console.log("No long or short position window openened")
-        return;
-      }
+//       console.log(overlapManager)
+//       console.log(overlapManager.hasChildNodes())
+//       if(!overlapManager.hasChildNodes()) {
+//         console.log("No long or short position window openened")
+//         return;
+//       }
       
-      console.log("found iframe document with content")
-        // Try to find your elements
-      var entryLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongEntryPrice"]');
-      var profitLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongProfitLevelPrice"]');
-      var stopLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongStopLevelPrice"]');
+//       console.log("found iframe document with content")
+//         // Try to find your elements
+//       var entryLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongEntryPrice"]');
+//       var profitLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongProfitLevelPrice"]');
+//       var stopLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongStopLevelPrice"]');
 
-      // If all elements are found, log them and disconnect the observer
-      if (entryLevel && profitLevel && stopLevel) {
-        console.log('Entry level:', entryLevel);
-        console.log('Profit level:', profitLevel);
-        console.log('Stop level:', stopLevel);
+//       // If all elements are found, log them and disconnect the observer
+//       if (entryLevel && profitLevel && stopLevel) {
+//         console.log('Entry level:', entryLevel);
+//         console.log('Profit level:', profitLevel);
+//         console.log('Stop level:', stopLevel);
     
-        // Disconnect the observer
-        observer.disconnect();
-      }
-      }, 1000);
-  });
+//         // Disconnect the observer
+//         observer.disconnect();
+//       }
+//       }, 1000);
+//   });
   
-  // Configuration of the observer
-  var config = {
-    attributes: true,
-    childList: true,
-    characterData: true,
-    subtree: true
-  };
+//   // Configuration of the observer
+//   var config = {
+//     attributes: true,
+//     childList: true,
+//     characterData: true,
+//     subtree: true
+//   };
   
-  // Pass in the target node (in this case, the body) and the observer configuration
-  observer.observe(document.body, config);
-}
+//   // Pass in the target node (in this case, the body) and the observer configuration
+//   observer.observe(document.body, config);
+// }
 
 if (existingDiv) {
   console.log("removing content");
   // If the element exists, remove it
   existingDiv.remove();
-  observer.disconnect();
-  observer = null;
+  // observer.disconnect();
+  // observer = null;
 } else {
+  //const variables
+  const positionDirection = {
+    longText: "long position",
+    shortText: "short position"
+  }
+
   // If the element doesn't exist, create and inject it
   console.log("adding content");
   var newDiv = document.createElement("div");
@@ -236,12 +244,12 @@ if (existingDiv) {
     loss: 0,
     positionSize: 0,
     updatePrices: function () {
-      entry.textContent = this.entryPrice;
-      target.textContent = this.profitPrice;
-      stop.textContent = this.stopPrice;
+      entry.textContent = this.entryPrice.toFixed(5);
+      target.textContent = this.profitPrice.toFixed(5);
+      stop.textContent = this.stopPrice.toFixed(5);
       profit.textContent = this.profit.toFixed(1);
       loss.textContent = this.loss.toFixed(1);
-      position.textContent = this.positionSize;
+      position.textContent = this.positionSize.toFixed(2);
     },
     doCalculations: function () {
       let lossPercent = Math.abs(
@@ -264,41 +272,83 @@ if (existingDiv) {
     prices.risk = e.target.value;
   });
 
-  // priceButton.addEventListener("click", function (e) {
-  //   let test = newDiv.parentElement
+  priceButton.addEventListener("click", function (e) {
+    let iframeContainer = document.body.querySelector("#tv_chart_container").firstElementChild
+    let iframeDocument = iframeContainer.contentDocument || iframeContainer.contentWindow.document;
+    let overlapManager = iframeDocument.querySelector("#overlap-manager-root")
+
+    let direction = overlapManager.querySelector(".ellipsis-xqf2SSG7")?.textContent
+
+    let entryLevel = 0;
+    let profitLevel = 0;
+    let stopLevel = 0;
+
+    if(!direction) {
+      console.log("no position window opened")
+      return;
+    }
+
+    if(direction.toLowerCase().trim() === positionDirection.longText) {
+      console.log("Long Position activated")
+        // price levels for entry, profit, stop
+      entryLevel = iframeDocument.querySelector(
+        '[data-property-id="Risk/RewardlongEntryPrice"]'
+      );
+
+      profitLevel = iframeDocument.querySelector(
+        '[data-property-id="Risk/RewardlongProfitLevelPrice"]' 
+      );
+
+      stopLevel = iframeDocument.querySelector(
+        '[data-property-id="Risk/RewardlongStopLevelPrice"]'
+      );
+    }
+    else if(direction.toLowerCase().trim() === positionDirection.shortText) {
+      console.log("Short Position activated")
+      entryLevel = iframeDocument.querySelector(
+        '[data-property-id="Risk/RewardshortEntryPrice"]'
+      );
+
+      profitLevel = iframeDocument.querySelector(
+        '[data-property-id="Risk/RewardshortProfitLevelPrice"]' 
+      );
+
+      stopLevel = iframeDocument.querySelector(
+        '[data-property-id="Risk/RewardshortStopLevelPrice"]'
+      );
+    }
+
+    if(!entryLevel || !profitLevel || !stopLevel ) {
+      console.log("not able to extract prices. exiting...");
+      return;
+    }
+
+    prices.entryPrice = parseFloat(entryLevel.value);
+    prices.profitPrice = parseFloat(profitLevel.value);
+    prices.stopPrice = parseFloat(stopLevel.value);
+   
+    prices.doCalculations();
+    prices.updatePrices();
+
+    let contractWindow = document.querySelector("#mexc_contract_v_open_position")
+    console.log(contractWindow)
+
+    let quantityDiv = document.querySelector(".component_numberInput__h86N3")
+    let quantityInput = quantityDiv.querySelector("input")
+    let positionDivbutton = Array.from(iframeDocument.querySelectorAll('.button-OvB35Th_'))[1];
     
-  //   console.log(test)
+    positionDivbutton.click();
 
-  //   let testdiv = newDiv.parentElement.querySelector(".ellipsis-xqf2SSG7")
+        // Set the value
+    quantityInput.value = prices.positionSize;
 
-  //   console.log(testdiv)
-  //   // price levels for entry, profit, stop
-  //   var entryLevel = document.querySelector(
-  //     '[data-property-id="Risk/RewardlongEntryPrice"]'
-  //   );
+    // Create a new 'Event' 
+    let event = new Event('input', { bubbles: true });
 
-  //   var profitLevel = document.querySelector(
-  //     '[data-property-id="Risk/RewardlongProfitLevelPrice"]'
-  //   );
+    // Dispatch the event
+    quantityInput.dispatchEvent(event);
 
-  //   var stopLevel = document.querySelector(
-  //     '[data-property-id="Risk/RewardlongStopLevelPrice"]'
-  //   );
-
-  //   if(!entryLevel || !profitLevel || !stopLevel ) {
-  //     console.log("not able to extract prices. exiting...");
-  //     return;
-  //   }
-
-  //   prices.entryPrice = entryLevel.value;
-  //   prices.profitPrice = profitLevel.value;
-  //   prices.stopPrice = stopLevel.value;
-
-  //   prices.doCalculations();
-  //   prices.updatePrices();
-  // });
-
-    
+  });
 
   positionButton.addEventListener("click", calculatePositionSize);
 

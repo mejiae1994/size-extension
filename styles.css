@@ -12,4 +12,8 @@
     input {
         color: black;
     }
+
+    select {
+        color: black;
+    }
 }
