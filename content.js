@@ -1,8 +1,6 @@
 // Check if the element already exists
 var existingDiv = document.getElementById("myExtensionDiv");
 
-
-
 // var observer;
 
 // if(!observer) {
@@ -96,14 +94,14 @@ if (existingDiv) {
   select.id = "account-risk";
 
   // Create the options
-  var optionValues = [5, 10, 15, 20];
+  var optionValues = [3, 5, 10, 15, 20];
   optionValues.forEach(function(value) {
     var option = document.createElement("option");
     option.value = value;
     option.textContent = "$" + value;
 
     // Set the default selected option
-    if (value === 5) {
+    if (value === 3) {
       option.selected = true;
     }
 
@@ -151,6 +149,10 @@ if (existingDiv) {
   let extractButton = document.createElement('button')
   extractButton.className = "price-button"
   extractButton.textContent = "Extract Price"
+  
+  let buyPositionButton = document.createElement('button')
+  buyPositionButton.className = "buy-position"
+  buyPositionButton.textContent = "Buy Position"
 
   //entry field
   let entryDiv = document.createElement('div')
@@ -204,6 +206,7 @@ if (existingDiv) {
   positionSizeDiv.appendChild(positionSizeSpan)
 
   priceContainer.appendChild(extractButton)
+  priceContainer.appendChild(buyPositionButton)
   priceContainer.appendChild(entryDiv)
   priceContainer.appendChild(targetDiv)
   priceContainer.appendChild(stopDiv)
@@ -271,11 +274,11 @@ if (existingDiv) {
     prices.risk = e.target.value;
   });
 
+  let longing = false;
   priceButton.addEventListener("click", function (e) {
     let iframeContainer = document.body.querySelector("#tv_chart_container").firstElementChild
     let iframeDocument = iframeContainer.contentDocument || iframeContainer.contentWindow.document;
     let overlapManager = iframeDocument.querySelector("#overlap-manager-root")
-
     let direction = overlapManager.querySelector(".ellipsis-xqf2SSG7")?.textContent
 
     let entryLevel = 0;
@@ -286,8 +289,6 @@ if (existingDiv) {
       console.log("no position window opened")
       return;
     }
-
-    let long = 0;
 
     if(direction.toLowerCase().trim() === positionDirection.longText) {
       console.log("Long Position activated")
@@ -303,7 +304,7 @@ if (existingDiv) {
       stopLevel = iframeDocument.querySelector(
         '[data-property-id="Risk/RewardlongStopLevelPrice"]'
       );
-      long = true;
+      longing = true;
     }
     else if(direction.toLowerCase().trim() === positionDirection.shortText) {
       console.log("Short Position activated")
@@ -332,7 +333,9 @@ if (existingDiv) {
    
     prices.doCalculations();
     prices.updatePrices();
+  });
 
+  buyPositionButton.addEventListener("click", function(e) {
     //what to use this for?
     let contractWindow = document.querySelector("#mexc_contract_v_open_position")
     console.log(contractWindow)
@@ -351,7 +354,7 @@ if (existingDiv) {
 
     let tpslDirection;
     let openDirectionButton;
-    if(long) {
+    if(longing) {
       tpslDirection = tpslCheck[0]
       openDirectionButton = openButtons[0]
     }
@@ -373,7 +376,7 @@ if (existingDiv) {
     let profitInput = inputComponents[0];
     let lossInput = inputComponents[1];
   
-    setInputValueAndDispatchEvent(quantityInput, 50);
+    setInputValueAndDispatchEvent(quantityInput, prices.positionSize);
     setInputValueAndDispatchEvent(profitInput, prices.profitPrice);
     setInputValueAndDispatchEvent(lossInput, prices.stopPrice);
 
@@ -381,9 +384,15 @@ if (existingDiv) {
       console.log("buying position");
       openDirectionButton.click();
     }
-  });
+  })
 
   positionButton.addEventListener("click", calculatePositionSize);
+
+  function calculatePositionSize(event) {
+    let riskMultiplier = parseFloat(riskPercent.value) / 100;
+    let calculatedAmount = prices.risk / riskMultiplier;
+    positionAmount.value = calculatedAmount;
+  }
 }
 
 function setInputValueAndDispatchEvent(inputElement, value) {
@@ -391,9 +400,9 @@ function setInputValueAndDispatchEvent(inputElement, value) {
   inputElement.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-function calculatePositionSize(event) {
-  let riskMultiplier = parseFloat(riskPercent.value) / 100;
-  let calculatedAmount = prices.risk / riskMultiplier;
-  positionAmount.value = calculatedAmount;
-}
-
+//TODO:
+/* 
+Need to separate extract values and buy position into separate logic blocks
+Need to add button to actual long/short position window
+Add coins to a list that I can click on and go to it right away by clicking the link - like long list, short list
+*/
