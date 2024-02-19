@@ -222,12 +222,19 @@ if (existingDiv) {
   newDiv.appendChild(amountContainer)
   newDiv.appendChild(priceContainer)
 
-  //DOM elements
+  //DOM elements, I already have access to these elements above, probably remove this at some point
   const positionButton = document.querySelector(".position-button");
   const priceButton = document.querySelector(".price-button");
   const riskPercent = document.querySelector("#risk-percentage");
   const positionAmount = document.querySelector("#position-amount");
   const accountRisk = document.querySelector("#account-risk");
+  const positionAppendedButton = document.createElement("button")
+  positionAppendedButton.textContent = "Buy"
+  positionAppendedButton.style.padding = '.5rem'
+  positionAppendedButton.style.fontSize = '1.4rem'
+  positionAppendedButton.style.marginInline = ".5rem"
+  positionAppendedButton.style.borderRadius = ".4rem"
+  positionAppendedButton.style.backgroundColor = "rgb(41, 98, 255)"
 
   //display price elements
   let entry = document.querySelector("#entry");
@@ -276,10 +283,25 @@ if (existingDiv) {
 
   let longing = false;
   priceButton.addEventListener("click", function (e) {
-    let iframeContainer = document.body.querySelector("#tv_chart_container").firstElementChild
-    let iframeDocument = iframeContainer.contentDocument || iframeContainer.contentWindow.document;
+    let iframeContainer = document.body.querySelector("#tv_chart_container")
+
+    if(!iframeContainer) {
+      console.log('Trading no prices to extract, open position window');
+      return;
+    }
+
+    let iframeDocument = iframeContainer.firstElementChild.contentDocument || iframeContainer.firstElementChild.contentWindow.document;
     let overlapManager = iframeDocument.querySelector("#overlap-manager-root")
     let direction = overlapManager.querySelector(".ellipsis-xqf2SSG7")?.textContent
+
+    if(!direction) {
+      console.log("no position window opened")
+      return;
+    }
+    
+    //button container to add buy button to website window
+    let buttonContainer = overlapManager.querySelectorAll("button")[1].parentElement;
+    buttonContainer.appendChild(positionAppendedButton)
 
     let entryLevel = 0;
     let profitLevel = 0;
@@ -335,17 +357,36 @@ if (existingDiv) {
     prices.updatePrices();
   });
 
-  buyPositionButton.addEventListener("click", function(e) {
-    //what to use this for?
-    let contractWindow = document.querySelector("#mexc_contract_v_open_position")
-    console.log(contractWindow)
+  buyPositionButton.addEventListener("click", executePosition)
 
+  //appendedPositionButton event, extract code from above into a common function
+  positionAppendedButton.addEventListener("click", executePosition)
+
+  positionButton.addEventListener("click", calculatePositionSize);
+
+  function calculatePositionSize(event) {
+    let riskMultiplier = parseFloat(riskPercent.value) / 100;
+    let calculatedAmount = prices.risk / riskMultiplier;
+    positionAmount.value = calculatedAmount;
+  }
+
+  function executePosition(event) {
     //element for grabbing position size input
     let quantityDiv = document.querySelector(".component_numberInput__h86N3")
+    
+    //validation
+    if(!quantityDiv) {
+      console.log("can't find position size window")
+      return;
+    }
     let quantityInput = quantityDiv.querySelector("input")
 
     //element for clicking TP/SL checkbox
     let tpslComponent = document.querySelector(".component_strategyWrapper__wzqv8")
+    //validation
+    if(!tpslComponent) {
+      console.log("can't find target/stop window");
+    }
     let tpslCheck = tpslComponent.querySelectorAll(".ant-checkbox-wrapper")
 
     //element for getting open long/short button
@@ -382,16 +423,11 @@ if (existingDiv) {
 
     if(quantityInput.value > 0 && profitInput.value > 0 && lossInput.value > 0) {
       console.log("buying position");
-      openDirectionButton.click();
+      // openDirectionButton.click();
     }
-  })
-
-  positionButton.addEventListener("click", calculatePositionSize);
-
-  function calculatePositionSize(event) {
-    let riskMultiplier = parseFloat(riskPercent.value) / 100;
-    let calculatedAmount = prices.risk / riskMultiplier;
-    positionAmount.value = calculatedAmount;
+    else {
+      console.log("could not find any price values")
+    }
   }
 }
 
@@ -405,4 +441,5 @@ function setInputValueAndDispatchEvent(inputElement, value) {
 Need to separate extract values and buy position into separate logic blocks
 Need to add button to actual long/short position window
 Add coins to a list that I can click on and go to it right away by clicking the link - like long list, short list
+Add validation for all logic
 */
