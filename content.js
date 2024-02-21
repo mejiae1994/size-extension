@@ -1,52 +1,20 @@
 // Check if the element already exists
 var existingDiv = document.getElementById("myExtensionDiv");
-//tv_chart_container only shows up if trading view chart is present
-var iframeContainer = document.body.querySelector("#tv_chart_container");
-var iframeDocument =
-  iframeContainer.firstElementChild.contentDocument || iframeContainer.firstElementChild.contentWindow.document;
-
-// Configuration of the observer
-var config = {
-  attributes: true,
-  childList: true,
-  characterData: true,
-  subtree: true,
-};
 
 var observer;
-
-if (!observer) {
-  observer = new MutationObserver(function (mutations) {
-    console.log(`mutating, observer state: ${observer}`);
-    for (let mutation of mutations) {
-      if (mutation.type === "childList" && mutation.target.id === "overlap-manager-root") {
-        console.log("overlap manager captured");
-        if (mutation.addedNodes.length > 0) {
-          console.log("position window opened");
-          console.log(mutation.target);
-        } else {
-          console.log("position window closed");
-        }
-      }
-    }
-  });
-
-  // Pass in the target node (in this case, the body) and the observer configuration
-  observer.observe(iframeDocument, config);
-}
 
 if (existingDiv) {
   console.log("removing content");
   observer.disconnect();
-  console.log(`disconnecting observer, observer state: ${observer}`);
   observer = null;
-  console.log(`nulling, observer state: ${observer}`);
-  console.log(observer);
-  iframeContainer = null;
-  iframeDocument = null;
   existingDiv.remove();
 } else {
   //const variables
+  const observerConfig = {
+    childList: true,
+    subtree: true,
+  };
+
   const positionDirection = {
     longText: "long position",
     shortText: "short position",
@@ -217,7 +185,14 @@ if (existingDiv) {
   positionAppendedButton.style.fontSize = "1.4rem";
   positionAppendedButton.style.marginInline = ".5rem";
   positionAppendedButton.style.borderRadius = ".4rem";
+  positionAppendedButton.style.border = "none";
   positionAppendedButton.style.backgroundColor = "rgb(41, 98, 255)";
+
+  //tv_chart_container only shows up if trading view chart is present
+  let iframeContainer = document.body.querySelector("#tv_chart_container");
+
+  let iframeDocument =
+    iframeContainer.firstElementChild.contentDocument || iframeContainer.firstElementChild.contentWindow.document;
 
   //display price elements
   let entry = document.querySelector("#entry");
@@ -226,6 +201,30 @@ if (existingDiv) {
   let profit = document.querySelector("#profit");
   let loss = document.querySelector("#loss");
   let position = document.querySelector("#position");
+
+  //Testing mutationobserver
+  if (!observer) {
+    observer = new MutationObserver(function (mutations) {
+      //this code blocks repeat too fast
+      console.log(`mutating, observer state: ${observer}`);
+      for (let mutation of mutations) {
+        if (mutation.type === "childList" && mutation.target.id === "overlap-manager-root") {
+          console.log("overlap manager captured");
+          if (mutation.addedNodes.length > 0) {
+            console.log("position window opened");
+            console.log(mutation.target);
+            let overlapManager = mutation.target;
+            //button container to add buy button to website window
+            let buttonContainer = overlapManager.querySelectorAll("button")[1].parentElement;
+            buttonContainer.appendChild(positionAppendedButton);
+          }
+        }
+      }
+    });
+
+    // Pass in the target node (in this case, the body) and the observer configuration
+    observer.observe(iframeDocument, observerConfig);
+  }
 
   const prices = {
     risk: accountRisk.value,
@@ -261,6 +260,29 @@ if (existingDiv) {
 
   let longing = false;
   priceButton.addEventListener("click", function (e) {
+    extractPricesFromWindow();
+  });
+
+  buyPositionButton.addEventListener("click", executePosition);
+
+  //appendedPositionButton event, extract code from above into a common function
+  positionAppendedButton.addEventListener("click", calculatePriceBuyPosition);
+
+  positionButton.addEventListener("click", calculatePositionSize);
+
+  function calculatePositionSize(event) {
+    let riskMultiplier = parseFloat(riskPercent.value) / 100;
+    let calculatedAmount = prices.risk / riskMultiplier;
+    positionAmount.value = calculatedAmount;
+  }
+
+  function calculatePriceBuyPosition() {
+    extractPricesFromWindow();
+    executePosition();
+  }
+
+  function extractPricesFromWindow() {
+    console.log("extracting prices");
     let iframeContainer = document.body.querySelector("#tv_chart_container");
 
     if (!iframeContainer) {
@@ -286,26 +308,17 @@ if (existingDiv) {
     let profitLevel = 0;
     let stopLevel = 0;
 
-    if (!direction) {
-      console.log("no position window opened");
-      return;
-    }
-
     if (direction.toLowerCase().trim() === positionDirection.longText) {
       console.log("Long Position activated");
       // price levels for entry, profit, stop
       entryLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongEntryPrice"]');
-
       profitLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongProfitLevelPrice"]');
-
       stopLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardlongStopLevelPrice"]');
       longing = true;
     } else if (direction.toLowerCase().trim() === positionDirection.shortText) {
       console.log("Short Position activated");
       entryLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardshortEntryPrice"]');
-
       profitLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardshortProfitLevelPrice"]');
-
       stopLevel = iframeDocument.querySelector('[data-property-id="Risk/RewardshortStopLevelPrice"]');
     }
 
@@ -321,22 +334,9 @@ if (existingDiv) {
 
     prices.doCalculations();
     prices.updatePrices();
-  });
-
-  buyPositionButton.addEventListener("click", executePosition);
-
-  //appendedPositionButton event, extract code from above into a common function
-  positionAppendedButton.addEventListener("click", executePosition);
-
-  positionButton.addEventListener("click", calculatePositionSize);
-
-  function calculatePositionSize(event) {
-    let riskMultiplier = parseFloat(riskPercent.value) / 100;
-    let calculatedAmount = prices.risk / riskMultiplier;
-    positionAmount.value = calculatedAmount;
   }
 
-  function executePosition(event) {
+  function executePosition() {
     //element for grabbing position size input
     let quantityDiv = document.querySelector(".component_numberInput__h86N3");
 
@@ -402,6 +402,8 @@ function setInputValueAndDispatchEvent(inputElement, value) {
 
 //TODO:
 /* 
+Add button to gui to stop mutationobserver when moving mutation observer to chrome.activetab logic
+Need to move extract price and buy position logic to be triggered from appended buy button
 Need to separate extract values and buy position into separate logic blocks
 Need to add button to actual long/short position window
 Add coins to a list that I can click on and go to it right away by clicking the link - like long list, short list
