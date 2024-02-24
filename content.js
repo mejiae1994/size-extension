@@ -27,7 +27,7 @@ if (existingDiv) {
   newDiv.style.position = "fixed";
   newDiv.style.top = "10px";
   newDiv.style.left = "10px";
-  newDiv.style.zIndex = 10000;
+  newDiv.style.zIndex = -10000;
   newDiv.style.color = "#fff";
   document.body.appendChild(newDiv);
 
@@ -282,6 +282,7 @@ if (existingDiv) {
   }
 
   function extractPricesFromWindow() {
+    longing = false;
     console.log("extracting prices");
     let iframeContainer = document.body.querySelector("#tv_chart_container");
 

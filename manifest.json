@@ -3,7 +3,7 @@
   "name": "CryptoPos",
   "version": "1.0",
   "host_permissions": ["<all_urls>"],
-  "permissions": ["scripting", "activeTab"],
+  "permissions": ["scripting", "activeTab", "tabs"],
   "action": {
     "default_icon": {
       "16": "resources/icon.png"
