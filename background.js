@@ -1,55 +1,45 @@
 const applicableSites = ["gocharting", "futures"];
 
-// chrome.action.onClicked.addListener(function (tab) {
-//   let websiteName = tab.url.split("//")[1].split(".")[0];
+let injectedTabs = {};
 
-//   console.log("website is: ", websiteName);
-//   if (applicableSites.includes(websiteName)) {
-//     console.log("executing script");
-
-//     chrome.scripting.executeScript({
-//       target: { tabId: tab.id },
-//       files: ["content.js"],
-//     });
-
-//     // Inject CSS
-//     chrome.scripting.insertCSS({
-//       target: { tabId: tab.id },
-//       files: ["styles.css"],
-//     });
-//   }
-// });
-
-chrome.tabs.onActivated.addListener(function (activeInfo) {
-  chrome.tabs.get(activeInfo.tabId, function (tab) {
-    let websiteName = tab.url.split("//")[1].split(".")[0];
-
-    console.log("website is: ", websiteName);
-    if (applicableSites.includes(websiteName)) {
-      console.log("executing script");
-
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["content.js"],
-      });
-
-      // Inject CSS
-      chrome.scripting.insertCSS({
-        target: { tabId: tab.id },
-        files: ["styles.css"],
-      });
-    }
-  });
+chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+  console.log("removing tab");
+  delete injectedTabs[tabId];
 });
 
-// chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-//   console.log(tab);
-//   if (changeInfo.status === "complete") {
-//     console.log("executing script");
+chrome.webNavigation.onCommitted.addListener(function (details) {
+  if (details.transitionType === "reload") {
+    console.log("removing tab");
+    delete injectedTabs[details.tabId];
+  }
+});
 
-//     chrome.scripting.executeScript({
-//       target: { tabId: tabId },
-//       files: ["content.js"],
-//     });
-//   }
-// });
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (changeInfo.status !== "complete") {
+    return;
+  }
+
+  let websiteName;
+  if (tab.url) {
+    websiteName = tab.url.split("//")[1].split(".")[0];
+  }
+
+  if (websiteName && applicableSites.includes(websiteName) && changeInfo.status === "complete" && !injectedTabs[tab.id]) {
+    console.log("website is: ", websiteName);
+    const options = { timeZone: "America/New_York" };
+    const currentTime = new Date().toLocaleString("en-US", options);
+    console.log(`executing script at ${currentTime}`);
+
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content2.js"],
+    });
+
+    chrome.scripting.insertCSS({
+      target: { tabId: tab.id },
+      files: ["styles.css"],
+    });
+
+    injectedTabs[tab.id] = true;
+  }
+});
